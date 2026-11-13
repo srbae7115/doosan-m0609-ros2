@@ -1,0 +1,106 @@
+# doosan-m0609-ros2 — 두산 M0609 + ROS 2 Humble (책상 측정 · MoveIt 사전 검증 · RViz 미러)
+
+로봇 제어(GUI · 그리퍼 · Pick & Place)는 DRFL 저장소 [doosan-m0609-drfl](https://github.com/srbae7115/doosan-m0609-drfl)에서 하고,
+이 저장소는 그 옆에서 쓰는 ROS 2 도구입니다. 두 프로그램이 동시에 로봇 **제어권**을 가질 수는 없습니다
+(RViz 미러와 `table_points.py`는 읽기 전용이라 GUI와 함께 사용 가능).
+
+## 설치
+```bash
+sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers dbus-x11   # + Docker (가상 모드 에뮬레이터)
+git clone https://github.com/srbae7115/doosan-m0609-ros2.git ~/doosan_ros2_ws
+~/doosan_ros2_ws/scripts/setup_doosan_robot2.sh
+```
+`setup_doosan_robot2.sh`: 공식 [doosan-robot2](https://github.com/DoosanRobotics/doosan-robot2) humble(8653b04)을 `src/`에 클론 →
+안전 패치(`patches/`) 적용 → 에뮬레이터 이미지 다운로드 → 필요한 패키지만 빌드 → `tools/flange_pose` 빌드
+
+| 경로 | 내용 |
+|---|---|
+| `src/m0609_mirror/` | RViz 미러 패키지 (DRFL 읽기 전용 → `/joint_states`, 책상·그리퍼·경로 마커) |
+| `scripts/table_points.py` | 직접 교시로 책상 높이 측정 |
+| `scripts/pp_scene.yaml`, `pp_scene_check.py` | MoveIt 장면 + 티칭 Pick & Place 사전 검증 (로봇 이동 없음) |
+| `scripts/moveit_*.py` | MoveIt 관절 이동 시험 |
+| `tools/flange_pose.cpp` | 플랜지 자세 읽기 (읽기 전용) |
+| `patches/` | 공식 드라이버 안전 패치 |
+| `table_points.json` | 실습실 책상 측정값 (예시) |
+
+---
+
+DRFL GUI(`~/doosan-m0609-drfl`)와 별개인 작업 공간입니다. 두 프로그램이 동시에 로봇 제어권을 가질 수 없으니 하나만 실행하세요.
+
+## 빌드 (완료 2026-11-13)
+```bash
+sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers dbus-x11
+cd ~/doosan_ros2_ws && source /opt/ros/humble/setup.bash
+colcon build --packages-up-to dsr_msgs2 dsr_common2 dsr_description2 dsr_hardware2 dsr_controller2 dsr_bringup2 dsr_moveit_config_m0609 \
+             --cmake-args -DDRCF_VER=2 -DCMAKE_BUILD_TYPE=Release
+```
+- 소스: `src/doosan-robot2` (github DoosanRobotics/doosan-robot2, humble 브랜치 8653b04)
+- Gazebo / MuJoCo 패키지는 빌드하지 않음
+- 에뮬레이터 이미지: `docker pull doosanrobot/dsr_emulator:3.0.1` (가상 모드에서 자동 실행/종료)
+
+## 가상 모드 (MoveIt + RViz) — ✅ 확인
+```bash
+cd ~/doosan_ros2_ws && source /opt/ros/humble/setup.bash && source install/setup.bash
+ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=virtual model:=m0609 host:=127.0.0.1
+```
+다른 터미널에서 MoveIt 관절 목표 시험:
+```bash
+cd ~/doosan_ros2_ws && source /opt/ros/humble/setup.bash && source install/setup.bash
+python3 scripts/moveit_joint_test.py 30 20 60 0 0 0     # J1~J6 [deg], 속도/가속 20%
+```
+결과: 계획·실행 성공, 최종 관절 오차 0.05° 이내.
+
+## 주의: 가상 모드와 실물 모드는 실행 경로가 다름
+`dsr_hardware2` write():
+- 가상: 매 주기 `amovej()` (에뮬레이터는 실시간 연결 미지원)
+- 실물: `servoj_rt()` 실시간 스트리밍 (UDP 12347)
+
+→ 가상 모드 성공이 실물(컨트롤러 2.10.1, 공식 지원은 2.12 이상) 동작을 보장하지 않습니다.
+## 실물 1단계: RViz 연결 (명령 없음) — ✅ 확인 2026-11-13
+```bash
+ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=real model:=m0609 host:=192.168.137.100 port:=12345
+```
+- 이 launch는 `joint_state_broadcaster` + `dsr_controller2`만 띄움. `dsr_controller2`는 위치 명령 인터페이스를 쓰지 않으므로
+  `servoj_rt`가 나가지 않음 → 로봇이 움직이지 않음 (코드 확인)
+- 드라이버가 스스로 제어권 강제 획득 + Servo ON (SAFE_OFF에서도 시작 가능)
+- 컨트롤러 2.10.1(GF02100101)에서: RT 스트림 연결·시작 성공, `/dsr01/joint_states` 100 Hz,
+  관절값이 DRFL 값과 0.001° 단위까지 일치
+- 네임스페이스는 `dsr01` (토픽: `/dsr01/joint_states`)
+
+## 실물 2단계: MoveIt 실물 이동 — ✅ 확인 2026-11-13
+```bash
+ros2 launch dsr_bringup2 dsr_bringup2_moveit.launch.py mode:=real model:=m0609 host:=192.168.137.100 port:=12345
+# 다른 터미널
+python3 scripts/moveit_rel_joint.py 6 5 0.1     # J6 +5°, 속도/가속 10%
+python3 scripts/moveit_rel_joint.py 6 -5 0.1    # 되돌리기
+```
+- 결과: 계획·실행 성공 (궤적 11점, 0.94초), 목표 오차 0.01° 이내, 왕복 후 원래 자세로 복귀
+- 컨트롤러 2.10.1에서 `servoj_rt` 실시간 스트리밍으로 실제 이동 확인 (공식 지원 2.12 미만이지만 동작)
+- MoveIt launch 기동 전후 관절 변화 0.001° 수준 (시작 시 튀지 않음)
+
+### 로컬 수정 (안전)
+`src/doosan-robot2/dsr_controller2/config/dsr_controller2.yaml` 의 `dsr_moveit_controller`에
+`set_last_command_interface_value_as_state_on_activation: false` 추가.
+드라이버의 위치 명령 초기값이 0 rad이라, JTC 기본값(true)이면 활성화 순간 "0° 자세 유지"를 목표로 삼을 수 있음.
+false로 두면 실제 측정 관절값에서 시작. 수정 후 `colcon build --packages-select dsr_controller2` 필요.
+
+## 테이블 측정 + MoveIt 장면 검증 (2026-11-13)
+- `scripts/table_points.py`: 직접 교시로 손가락 끝을 테이블에 대고 기록 (읽기 전용 DRFL `tools/flange_pose`, 제어권 불필요)
+  - 측정 4점 → 측정면 기울기 1.5°, 측정점 중심 Z ≈ 6 mm (툴 140 + 띄운 간격 15 mm 기준), 결과 `table_points.json`
+- `scripts/pp_scene.yaml`: 장면 설정 (테이블은 평평한 박스, 윗면 13 mm / 그리퍼 / 직육면체 / 고정 물체)
+- `scripts/pp_scene_check.py`: 장면 적용 + 티칭 home/pick/place 검증 (로봇 이동 없음, 가상 모드 MoveIt에서 실행)
+  - 손가락 끝 높이, 접근점 IK, 자세별 충돌, 관절 경로 / 직선 경로 계획, 물체를 잡은 구간
+  - 음성 시험: pick 아래 40 mm(손가락 끝이 테이블 아래)에서 `table ↔ gripper` 충돌 검출 확인
+- 공식 `dsr_moveit_config_m0609` 의 demo.launch.py 는 없는 패키지(m0609_moveit_config)를 참조해 실행 불가 → 가상 모드 사용
+
+## RViz 미러: DRFL GUI로 움직이는 실물을 RViz에서 같이 보기 (2026-11-13)
+```bash
+cd ~/doosan_ros2_ws && source /opt/ros/humble/setup.bash && source install/setup.bash
+ros2 launch m0609_mirror mirror.launch.py            # ip:=192.168.137.100 기본
+```
+- `src/m0609_mirror`: `drfl_mirror` 노드가 DRFL 모니터링을 **읽기 전용**으로 받아 `/joint_states`(50 Hz)와
+  `/gripper_state`(open/closed/holding/middle)를 발행. 제어권 요청·명령 없음 → DRFL GUI와 동시에 사용 가능
+- `scene_markers.py`: 책상 박스, 그리퍼(손가락 영역 색: 초록=열림, 주황=닫힘, 파랑=물체 잡음), 잡은 물체(빨강),
+  티칭 home/pick/place(손가락 끝 위치), Pick & Place 경로(노란 선, 수직 접근 + 이동 높이). 2초마다 파일을 다시 읽음
+- 관절값은 DRFL 값과 0.01° 단위까지 일치 확인
+- ROS 드라이버(dsr_bringup2)나 가상 모드와 동시에 띄우지 말 것 (`/joint_states` 충돌)

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>m0609_mirror</name>
+  <version>0.1.0</version>
+  <description>Read-only mirror of a Doosan M0609 (DRFL monitoring, no control authority) into ROS 2 for RViz,
+    with desk / gripper / taught Pick &amp; Place markers. Runs alongside the DRFL GUI.</description>
+  <maintainer email="noreply@example.com">bsr</maintainer>
+  <license>BSD-3-Clause</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>dsr_common2</depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>dsr_description2</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

@@ -1,0 +1,15 @@
+diff --git a/dsr_controller2/config/dsr_controller2.yaml b/dsr_controller2/config/dsr_controller2.yaml
+index c1372c2..720b0af 100755
+--- a/dsr_controller2/config/dsr_controller2.yaml
++++ b/dsr_controller2/config/dsr_controller2.yaml
+@@ -76,6 +76,10 @@
+ 
+   dsr_moveit_controller:
+     ros__parameters:
++      # [local change] dsr_hardware2 initializes position commands to 0 rad. With the JTC default (true) the
++      # controller would take 0 as the current state on activation and hold the all-zero pose. false = start
++      # from the measured joint state.
++      set_last_command_interface_value_as_state_on_activation: false
+       command_interfaces:
+         - position
+         - velocity
