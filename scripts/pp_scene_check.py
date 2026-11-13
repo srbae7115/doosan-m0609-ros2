@@ -217,19 +217,21 @@ class Checker(Node):
         return ok
 
 
+DESK_PLANE = None  # pp_scene.yaml desk.plane (실습실 공통 고정값), main() 에서 설정
+
+
 def table_surface(x_mm, y_mm):
-    """측정 평면 (table_points.json fit). 없으면 None."""
-    try:
-        with open(os.path.expanduser("~/doosan_ros2_ws/table_points.json")) as f:
-            fit = json.load(f)["fit"]
-        a, b, c = fit["plane"]
-        return a * x_mm + b * y_mm + c + fit.get("reference_offset_mm", 0.0)  # 책상 접촉점 보정
-    except (OSError, KeyError, ValueError):
+    """실제 책상 윗면 높이 [mm] (pp_scene.yaml desk.plane). 없으면 None."""
+    if not DESK_PLANE:
         return None
+    a, b, c = DESK_PLANE
+    return a * x_mm + b * y_mm + c
 
 
 def main():
+    global DESK_PLANE
     cfg = yaml.safe_load(open(os.path.join(HERE, "pp_scene.yaml")))
+    DESK_PLANE = (cfg.get("desk") or {}).get("plane")
     with open(os.path.expanduser(cfg["points_file"])) as f:
         pts = json.load(f)["points"]
     for k in ("home", "pick", "place"):

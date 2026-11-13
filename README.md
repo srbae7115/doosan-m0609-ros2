@@ -16,12 +16,16 @@ git clone https://github.com/srbae7115/doosan-m0609-ros2.git ~/doosan_ros2_ws
 | 경로 | 내용 |
 |---|---|
 | `src/m0609_mirror/` | RViz 미러 패키지 (DRFL 읽기 전용 → `/joint_states`, 책상·그리퍼·경로 마커) |
-| `scripts/table_points.py` | 직접 교시로 책상 높이 측정 |
+| `scripts/table_points.py` | 직접 교시로 책상 측정 (책상이 바뀐 경우에만) |
 | `scripts/pp_scene.yaml`, `pp_scene_check.py` | MoveIt 장면 + 티칭 Pick & Place 사전 검증 (로봇 이동 없음) |
 | `scripts/moveit_*.py` | MoveIt 관절 이동 시험 |
 | `tools/flange_pose.cpp` | 플랜지 자세 읽기 (읽기 전용) |
 | `patches/` | 공식 드라이버 안전 패치 |
-| `table_points.json` | 실습실 책상 측정값 (예시) |
+| `table_points.json` | 고정 책상값을 만든 원본 측정 데이터 |
+
+**책상은 실습실 공통 고정값입니다.** 모든 실습 책상이 같으므로 `scripts/pp_scene.yaml` 의 `desk.plane`(실제 책상 면)과
+`table.top_z: 11`(충돌 모델 박스 윗면)을 그대로 쓰고, 학생은 책상을 측정하지 않습니다. 책상이 바뀐 경우에만 아래
+"테이블 측정" 절차로 다시 재서 두 값을 고칩니다.
 
 ---
 
@@ -84,7 +88,7 @@ python3 scripts/moveit_rel_joint.py 6 -5 0.1    # 되돌리기
 드라이버의 위치 명령 초기값이 0 rad이라, JTC 기본값(true)이면 활성화 순간 "0° 자세 유지"를 목표로 삼을 수 있음.
 false로 두면 실제 측정 관절값에서 시작. 수정 후 `colcon build --packages-select dsr_controller2` 필요.
 
-## 테이블 측정 + MoveIt 장면 검증 (2026-11-13)
+## 테이블 측정 (책상이 바뀐 경우에만) + MoveIt 장면 검증 (2026-11-13)
 - `scripts/table_points.py`: 직접 교시로 손가락 끝을 테이블에 대고 기록 (읽기 전용 DRFL `tools/flange_pose`, 제어권 불필요)
   - 측정 4점 → 측정면 기울기 1.5°, 측정점 중심 Z ≈ 6 mm (툴 140 + 띄운 간격 15 mm 기준), 결과 `table_points.json`
 - `scripts/pp_scene.yaml`: 장면 설정 (테이블은 평평한 박스, 윗면 13 mm / 그리퍼 / 직육면체 / 고정 물체)
