@@ -54,7 +54,10 @@ class SceneMarkers(Node):
         try:
             with open(self.scene_file) as f:
                 self.cfg = yaml.safe_load(f) or {}
-            with open(os.path.expanduser(self.cfg.get("points_file", ""))) as f:
+            pf = os.path.expanduser(self.cfg.get("points_file", ""))
+            if not os.path.exists(pf):  # not taught on this PC yet -> example points shipped in the repo
+                pf = os.path.join(os.path.dirname(self.scene_file), "example_points", os.path.basename(pf))
+            with open(pf) as f:
                 self.pts = json.load(f).get("points", {})
         except (OSError, ValueError, yaml.YAMLError) as e:
             self.get_logger().warn(f"reload: {e}", throttle_duration_sec=10.0)

@@ -232,7 +232,13 @@ def main():
     global DESK_PLANE
     cfg = yaml.safe_load(open(os.path.join(HERE, "pp_scene.yaml")))
     DESK_PLANE = (cfg.get("desk") or {}).get("plane")
-    with open(os.path.expanduser(cfg["points_file"])) as f:
+    pf = os.path.expanduser(cfg["points_file"])
+    if not os.path.exists(pf):
+        # 이 PC에서 아직 GUI로 티칭하지 않음 → 저장소의 예시 티칭 점(2026-11-13 실습실 로봇) 사용
+        ex = os.path.join(HERE, "example_points", os.path.basename(pf))
+        print(f"⚠ {cfg['points_file']} 없음 → 예시 티칭 점 사용: {ex}")
+        pf = ex
+    with open(pf) as f:
         pts = json.load(f)["points"]
     for k in ("home", "pick", "place"):
         if k not in pts:
