@@ -20,7 +20,8 @@ sudo usermod -aG docker $USER
 docker --version
 docker run --rm hello-world     # "Hello from Docker!" 가 나오면 준비 완료
 ```
-- `permission denied` → 다시 로그인하지 않음
+- `permission denied` → docker 그룹이 아직 적용 안 됨. Ubuntu 데스크톱은 다시 로그인해도 이전 세션이 남아 반영 안 될 때가 있음 →
+  `newgrp docker` 실행 후 같은 터미널에서 다시 확인 (그 터미널에만 적용, 한 번 재부팅하면 이후 불필요)
 - `Cannot connect to the Docker daemon` → Docker가 꺼져 있음 (WSL2 + docker.io: `sudo service docker start`, Docker Desktop: Windows에서 앱 실행)
 
 ### 1) 패키지 · 저장소 · 설치 스크립트
