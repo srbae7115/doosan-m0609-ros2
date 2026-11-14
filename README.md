@@ -26,7 +26,7 @@ docker run --rm hello-world     # "Hello from Docker!" 가 나오면 준비 완�
 
 ### 1) 패키지 · 저장소 · 설치 스크립트
 ```bash
-sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers dbus-x11
+sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers ros-humble-moveit dbus-x11   # ROS 2 desktop엔 MoveIt 없음
 git clone https://github.com/srbae7115/doosan-m0609-ros2.git ~/doosan_ros2_ws
 ~/doosan_ros2_ws/scripts/setup_doosan_robot2.sh
 ```
@@ -107,7 +107,7 @@ GUI에서 조그·그리퍼·Pick & Place를 하면 RViz의 로봇과 그리퍼 
 
 ## 수동 빌드 (`setup_doosan_robot2.sh` 가 하는 일)
 ```bash
-sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers dbus-x11
+sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers ros-humble-moveit dbus-x11   # ROS 2 desktop엔 MoveIt 없음
 cd ~/doosan_ros2_ws && source /opt/ros/humble/setup.bash
 colcon build --packages-up-to dsr_msgs2 dsr_common2 dsr_description2 dsr_hardware2 dsr_controller2 dsr_bringup2 dsr_moveit_config_m0609 \
              --cmake-args -DDRCF_VER=2 -DCMAKE_BUILD_TYPE=Release

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Clone the official Doosan ROS 2 driver (humble) at the tested commit, apply the local safety patch, build.
 # Prerequisites: ROS 2 Humble, Docker (virtual mode), and
-#   sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers dbus-x11
+#   sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers ros-humble-moveit dbus-x11
 set -e
 WS="$(cd "$(dirname "$0")/.." && pwd)"
 COMMIT=8653b04   # DoosanRobotics/doosan-robot2 humble, tested 2026-11-13
@@ -15,6 +15,10 @@ if git -C doosan-robot2 apply --check "$WS/patches/dsr_controller2_safe_activati
   echo "patch applied: dsr_moveit_controller starts from the measured joint state"
 else
   echo "patch already applied (or does not apply) - check dsr_controller2/config/dsr_controller2.yaml"
+fi
+if [ ! -d /opt/ros/humble/share/moveit_ros_move_group ]; then
+  echo "MoveIt 없음: sudo apt install -y ros-humble-moveit ros-humble-ros2-controllers 후 다시 실행"
+  exit 1
 fi
 docker pull doosanrobot/dsr_emulator:3.0.1
 cd "$WS"
