@@ -8,8 +8,24 @@
   DRFL GUI와 동시에 쓰지 않습니다.
 
 ## 설치
+### 0) Docker (가상 모드 에뮬레이터용)
+- **WSL2**: Windows에 Docker Desktop 설치 → Settings → Resources → WSL integration 에서 이 Ubuntu 켜기 (아래 apt 두 줄은 건너뜀)
+- **순수 Ubuntu**:
 ```bash
-sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers dbus-x11   # + Docker (가상 모드 에뮬레이터)
+sudo apt install -y docker.io
+sudo usermod -aG docker $USER
+```
+다시 로그인한 뒤 확인합니다 (WSL2는 PowerShell에서 `wsl --shutdown` 후 다시 열기).
+```bash
+docker --version
+docker run --rm hello-world     # "Hello from Docker!" 가 나오면 준비 완료
+```
+- `permission denied` → 다시 로그인하지 않음
+- `Cannot connect to the Docker daemon` → Docker가 꺼져 있음 (WSL2 + docker.io: `sudo service docker start`, Docker Desktop: Windows에서 앱 실행)
+
+### 1) 패키지 · 저장소 · 설치 스크립트
+```bash
+sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers dbus-x11
 git clone https://github.com/srbae7115/doosan-m0609-ros2.git ~/doosan_ros2_ws
 ~/doosan_ros2_ws/scripts/setup_doosan_robot2.sh
 ```
