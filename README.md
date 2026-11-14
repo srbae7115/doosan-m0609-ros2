@@ -105,6 +105,12 @@ GUI에서 조그·그리퍼·Pick & Place를 하면 RViz의 로봇과 그리퍼 
 
 # 참고 기록 (개발·검증 과정)
 
+
+### 티칭 점 (예시 = 실습실 기준)
+`pp_scene_check.py` 와 RViz 미러는 GUI가 저장한 `~/m0609_points_<시리얼>.json` 을 읽습니다. 이 PC에서 아직 티칭하지 않아 파일이 없으면
+`scripts/example_points/` 의 예시 티칭 점을 대신 씁니다. 예시는 **실습실 M0609 + 실습실 책상 기준**(2026-11-13 티칭)이라 검증 연습용이며,
+실제 Pick & Place는 각자 GUI에서 티칭한 점으로 하고 다시 검증합니다.
+
 ## 수동 빌드 (`setup_doosan_robot2.sh` 가 하는 일)
 ```bash
 sudo apt-get install -y libpoco-dev ros-humble-ros2-controllers ros-humble-moveit dbus-x11   # ROS 2 desktop엔 MoveIt 없음
