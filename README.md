@@ -32,6 +32,13 @@ git clone https://github.com/srbae7115/doosan-m0609-ros2.git ~/doosan_ros2_ws
 `setup_doosan_robot2.sh`: 공식 [doosan-robot2](https://github.com/DoosanRobotics/doosan-robot2) humble(8653b04)을 `src/`에 클론 →
 안전 패치(`patches/`) 적용 → 에뮬레이터 이미지 다운로드 → 필요한 패키지만 빌드 → `tools/flange_pose` 빌드
 
+> **메모리**: `dsr_controller2.cpp` 한 파일 컴파일에 RAM 약 6 GB가 필요합니다. 부족하면
+> `c++: fatal error: Killed signal terminated program cc1plus` 로 실패하므로, 스크립트가 RAM+스왑이 7 GB 미만이면 빌드 전에 멈추고 안내합니다.
+> - WSL2: `%UserProfile%\.wslconfig` 의 `[wsl2]` 아래에 `memory=8GB`, `swap=8GB` → PowerShell에서 `wsl --shutdown` → 스크립트 다시 실행
+> - 순수 Ubuntu: `sudo fallocate -l 8G /swapfile2 && sudo chmod 600 /swapfile2 && sudo mkswap /swapfile2 && sudo swapon /swapfile2` → 다시 실행
+>
+> 이미 빌드된 패키지는 건너뛰므로 다시 실행해도 처음부터 하지 않습니다. 빌드에 5분 이상 걸릴 수 있습니다.
+
 | 경로 | 내용 |
 |---|---|
 | `src/m0609_mirror/` | RViz 미러 패키지 (DRFL 읽기 전용 → `/joint_states`, 책상·그리퍼·경로 마커) |
